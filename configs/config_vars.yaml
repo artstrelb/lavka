@@ -1,0 +1,9 @@
+worker-threads: 4
+worker-fs-threads: 2
+logger-level: info
+
+is-testing: false
+
+server-port: 8080
+
+dbconnection: 'postgresql://lavka_user:123456@localhost:5432/lavka_db_1'
