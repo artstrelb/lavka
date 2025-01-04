@@ -23,87 +23,10 @@
 #include <userver/formats/serialize/common_containers.hpp>
 
 
-namespace pg = userver::storages::postgres;
-
-enum class CourierType {kAuto, kBike, kFoot};
-
-template<>
-struct userver::storages::postgres::io::CppToUserPg<CourierType> {
-  static constexpr DBTypeName postgres_name = "lavka.courier_type";
-  static constexpr userver::utils::TrivialBiMap enumerators = [](auto selector) {
-    return selector()
-      .Case("FOOT", CourierType::kFoot)
-      .Case("AUTO", CourierType::kAuto)
-      .Case("BIKE", CourierType::kBike);
-  };
-};
-
-namespace lavka {
-
-template <typename Duration>
-using TimeRange = userver::utils::StrongTypedef<struct MyTimeTag, pg::Range<userver::utils::datetime::TimeOfDay<Duration>>>;
-
-template <typename Duration>
-using BoundedTimeRange = userver::utils::StrongTypedef<struct MyTimeTag, pg::BoundedRange<userver::utils::datetime::TimeOfDay<Duration>>>;
-
-} // namespace lavka
-
-
-template <typename Duration>
-struct userver::storages::postgres::io::CppToUserPg<lavka::TimeRange<Duration>> {
-    static constexpr DBTypeName postgres_name = "lavka.timerange";
-};
- 
-template <typename Duration>
-struct userver::storages::postgres::io::CppToUserPg<lavka::BoundedTimeRange<Duration>> {
-    static constexpr DBTypeName postgres_name = "lavka.timerange";
-};
-
-bool checkInterval(std::string str) {
-  if(str.length() != 11) return false;
-  
-  std::string t1 = str.substr(0, 5);
-  std::string t2 = str.substr(6, 5);
-
-  return true;
-}
+#include "../../db/types.hpp"
 
 
 namespace lavka {
-
-class OrdersAdd final : public userver::server::handlers::HttpHandlerJsonBase {
- public:
-  static constexpr std::string_view kName = "handler-orders-add";
-
-  OrdersAdd(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context);
-
-
-  userver::formats::json::Value HandleRequestJsonThrow(const userver::server::http::HttpRequest& request, const userver::formats::json::Value& json, userver::server::request::RequestContext&) 
-    const override;
-
-  private:
-   pg::ClusterPtr pg_cluster_;
-};
-
-} // namespace lavka
-
-
-namespace lavka {
-
-using namespace std::chrono_literals;
- 
-using Minutes = userver::utils::datetime::TimeOfDay<std::chrono::minutes>;
-using TimeRange2 = TimeRange<std::chrono::minutes>;
-using BoundedTimeRange2 = BoundedTimeRange<std::chrono::minutes>;
-
-struct UserDbInfo {
-    std::int64_t id;
-    CourierType courier_type;
-    std::vector<int64_t> regions;
-    std::vector<BoundedTimeRange2> working_hours;
-};
-
-
 
 OrdersAdd::OrdersAdd(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context)
 	: HttpHandlerJsonBase(config, context),

@@ -23,83 +23,9 @@
 #include <userver/formats/serialize/common_containers.hpp>
 #include <userver/formats/parse/common_containers.hpp>
 
-namespace pg = userver::storages::postgres;
-
-enum class CourierType {kAuto, kBike, kFoot};
-
-template<>
-struct userver::storages::postgres::io::CppToUserPg<CourierType> {
-  static constexpr DBTypeName postgres_name = "lavka.courier_type";
-  static constexpr userver::utils::TrivialBiMap enumerators = [](auto selector) {
-    return selector()
-      .Case("FOOT", CourierType::kFoot)
-      .Case("AUTO", CourierType::kAuto)
-      .Case("BIKE", CourierType::kBike);
-  };
-};
+#include "../../db/types.hpp"
 
 namespace lavka {
-
-template <typename Duration>
-using TimeRange = userver::utils::StrongTypedef<struct MyTimeTag, pg::Range<userver::utils::datetime::TimeOfDay<Duration>>>;
-
-template <typename Duration>
-using BoundedTimeRange = userver::utils::StrongTypedef<struct MyTimeTag, pg::BoundedRange<userver::utils::datetime::TimeOfDay<Duration>>>;
-
-} // namespace lavka
-
-
-template <typename Duration>
-struct userver::storages::postgres::io::CppToUserPg<lavka::TimeRange<Duration>> {
-    static constexpr DBTypeName postgres_name = "lavka.timerange";
-};
-
-template <typename Duration>
-struct userver::storages::postgres::io::CppToUserPg<lavka::BoundedTimeRange<Duration>> {
-    static constexpr DBTypeName postgres_name = "lavka.timerange";
-};
-
-namespace lavka {
-
-class OrdersAssign final : public userver::server::handlers::HttpHandlerBase {
- public:
-  static constexpr std::string_view kName = "handler-orders-assign";
-
-  OrdersAssign(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context);
-
-
-  std::string HandleRequestThrow(const userver::server::http::HttpRequest& request, userver::server::request::RequestContext&) 
-    const override;
-
-  private:
-   pg::ClusterPtr pg_cluster_;
-};
-
-} // namespace lavka
-
-
-namespace lavka {
-
-using namespace std::chrono_literals;
-
-using Minutes = userver::utils::datetime::TimeOfDay<std::chrono::minutes>;
-using TimeRange2 = TimeRange<std::chrono::minutes>;
-using BoundedTimeRange2 = BoundedTimeRange<std::chrono::minutes>;
-
-struct CourierDbInfo {
-    std::int64_t id;
-    CourierType courier_type;
-    std::vector<std::int64_t> regions;
-    std::vector<BoundedTimeRange2> working_hours;
-};
-
-struct OrderDbInfo {
-    std::int64_t id;
-    float weight;
-    std::int64_t regions;
-    std::vector<BoundedTimeRange2> delivery_hours;
-    std::int64_t cost;
-};
 
 const int kMaxWeightFoot = 10;
 const int kMaxWeightBike = 20;
@@ -215,7 +141,6 @@ bool PutOrder(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const
   // [Order.from, Order.to] - диапазон в котором надо доставить заказ
   
   //Проверить что укладываемся во время доставки заказа и не выходим за рабочее время курьера
-  // Поправить условие пересечения времен!!!
   int start = std::max(Interval.t, t1);
   if(start + time2 > Interval.to || start + time2 > t2) error = true;
 
@@ -224,12 +149,6 @@ bool PutOrder(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const
 
   if(Order.weight > maxWeight) error = true;
 
-  //LOG_DEBUG()<<"test_debuuuuuuuuuuug "<<error<<" !!!!!!";
-
-  if(Order.id == 8) {
-    //LOG_DEBUG()<<Interval.to<<"######";
-  }
-
   //если физически не можем взять
   if(error) return false;
 
@@ -237,10 +156,6 @@ bool PutOrder(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const
   //мы отобрали заказы которые можем доставить
   //пытаемся сгруппировать с текущим
   //иначе доставляем отдельно
-
-  if(Order.id == 7) {
-    //LOG_DEBUG()<<(take > 0 && take < maxCnt && (!isChangeRegion) && !isOverloading)<<"######";
-  }
 
   if(take > 0 && take < maxCnt && (!isChangeRegion && !isOverloading && (Interval.t + time2 < Interval.to))) {
     //группируем с текущим
@@ -265,8 +180,6 @@ bool PutOrder(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const
     return true;
   }
 
-  //LOG_DEBUG()<<price<<"!!!";
-
   return false;
 }
 
@@ -289,20 +202,13 @@ void PrintInterval(const IntervalDelivery& Interval) {
   builder["starts"] = Interval.starts;
 
   LOG_DEBUG()<<userver::formats::json::ToString(builder.ExtractValue());
-
-
-  //LOG_DEBUG()<<fmt::format("[{}-{}] courier_id={}", interval.from, interval.to, interval.courier_id);
 }
 
 
 void RecursionRun(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const std::unordered_map<std::int64_t, CourierDbInfo>& Couriers, std::vector<IntervalDelivery> Intervals, const std::vector<std::int64_t> &OrdersIds, std::unordered_map<std::int64_t, bool> mapCompletedIds, int price) {
   //записать результат BestIntervals
   //Надо доставить максимум заказов
-  //LOG_DEBUG()<<mapCompletedIds.size()<<"##############";
   if(mapCompletedIds.size() >= BestCountOrder ||  ( mapCompletedIds.size() == BestCountOrder && price < BestPrice)) {
-    /*if(!Intervals.empty()) {
-      PrintInterval(Intervals[1]);
-    }*/
     BestCountOrder = mapCompletedIds.size();
     BestPrice = price;
     BestIntervals = Intervals;
@@ -323,10 +229,6 @@ void RecursionRun(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, c
       IntervalDelivery oldInterval = Interval;
       int calcPrice = 0;
       if(PutOrder(Orders, Couriers, Interval, orderId, calcPrice)) {
-        //LOG_DEBUG()<<"pognali!!!";
-        //LOG_DEBUG()<<fmt::format("[{}-{}] courier_id={} order_id={}", Interval.from, Interval.to, Interval.courier_id, orderId);
-        //LOG_DEBUG()<<Interval.groupsOrders.size();
-        //return;
 
         price += calcPrice;
 
@@ -399,11 +301,6 @@ std::string OrdersAssign::HandleRequestThrow(const userver::server::http::HttpRe
 
       interval.courier_id = courier.id;
 
-     // PrintInterval(interval);return "";
-
-      //LOG_DEBUG()<<fmt::format("[{}-{}] courier_id={}", interval.from, interval.to, interval.courier_id);
-      //return ToString(userver::formats::json::ValueBuilder(interval.ExtractValue());
-
       intervals.push_back(interval);
     }
   }
@@ -434,17 +331,12 @@ std::string OrdersAssign::HandleRequestThrow(const userver::server::http::HttpRe
 
 
   // BestIntervals - глобальная переменная в которой содержится оптимальное распределение
-  //LOG_DEBUG()<<"!!start "<<BestIntervals.size()<<"!!end";
 
    //сначала всё удалим
    auto res1 = pg_cluster_->Execute(pg::ClusterHostType::kMaster, "DELETE FROM lavka.couriers_assignments");
 
   for(auto Interval: BestIntervals) {
     auto courierId = Interval.courier_id;
-    
-    // тут всё по нулям
-    //LOG_DEBUG()<<"!!start "<<Interval.groupsOrders.size()<<" !!end";
-    //PrintInterval(Interval);
     
     for(size_t i = 0; i < Interval.groupsOrders.size(); i++) {
        

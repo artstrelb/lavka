@@ -30,11 +30,18 @@ using TimeRange2 = TimeRange<std::chrono::minutes>;
 using BoundedTimeRange2 = BoundedTimeRange<std::chrono::minutes>;
 
 
+
 struct UserDbInfo {
     std::int64_t id;
     CourierType courier_type;
     std::vector<int64_t> regions;
     std::vector<BoundedTimeRange2> working_hours;
+};
+
+struct AssignDbInfo {
+    std::int64_t courier_id;
+    Minutes time_start;
+    std::vector<std::int64_t> orders;
 };
 
 
