@@ -28,26 +28,29 @@ userver_setup_environment()
 add_library(${PROJECT_NAME}_objs OBJECT
     src/hello.hpp
     src/hello.cpp
-    src/couriers.hpp
-    src/couriers.cpp
-    src/couriers/couriers_add.cpp
-    src/couriers/couriers_add.hpp
-    src/couriers/couriers_list.cpp
-    src/couriers/couriers_list.hpp
-    src/couriers/couriers_meta_info.cpp
-    src/couriers/couriers_meta_info.hpp
-    src/couriers/couriers_assignments.cpp
-    src/couriers/couriers_assignments.hpp
-    src/orders/orders.cpp
-    src/orders/orders.hpp
-    src/orders/orders_add.cpp
-    src/orders/orders_add.hpp
-    src/orders/orders_list.cpp
-    src/orders/orders_list.hpp
-    src/orders/orders_complete.cpp
-    src/orders/orders_complete.hpp
-    src/orders/orders_assign.cpp
-    src/orders/orders_assign.hpp
+
+    src/db/types.hpp
+
+    src/handlers/couriers/couriers.hpp
+    src/handlers/couriers/couriers.cpp
+    src/handlers/couriers/couriers_add.cpp
+    src/handlers/couriers/couriers_add.hpp
+    src/handlers/couriers/couriers_list.cpp
+    src/handlers/couriers/couriers_list.hpp
+    src/handlers/couriers/couriers_meta_info.cpp
+    src/handlers/couriers/couriers_meta_info.hpp
+    src/handlers/couriers/couriers_assignments.cpp
+    src/handlers/couriers/couriers_assignments.hpp
+    src/handlers/orders/orders.cpp
+    src/handlers/orders/orders.hpp
+    src/handlers/orders/orders_add.cpp
+    src/handlers/orders/orders_add.hpp
+    src/handlers/orders/orders_list.cpp
+    src/handlers/orders/orders_list.hpp
+    src/handlers/orders/orders_complete.cpp
+    src/handlers/orders/orders_complete.hpp
+    src/handlers/orders/orders_assign.cpp
+    src/handlers/orders/orders_assign.hpp
 )
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::postgresql)
 
