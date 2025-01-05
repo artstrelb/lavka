@@ -72,7 +72,7 @@ struct IntervalDelivery {
 };
 
 //Берем состояние курьера и пытаемся дать ему заказ
-bool PutOrder(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const std::unordered_map<std::int64_t, CourierDbInfo>& Couriers, IntervalDelivery &Interval, std::int64_t orderId, int &price) {
+bool PutOrder(const std::unordered_map<std::int64_t, lavka::OrderDbInfo>& Orders, const std::unordered_map<std::int64_t, lavka::CourierDbInfo>& Couriers, IntervalDelivery &Interval, std::int64_t orderId, int &price) {
   std::int64_t courierId = Interval.courier_id;
   //сделать проверку если нет курьера то прекращаем;
   auto Courier = Couriers.at(courierId);
@@ -205,7 +205,7 @@ void PrintInterval(const IntervalDelivery& Interval) {
 }
 
 
-void RecursionRun(const std::unordered_map<std::int64_t, OrderDbInfo>& Orders, const std::unordered_map<std::int64_t, CourierDbInfo>& Couriers, std::vector<IntervalDelivery> Intervals, const std::vector<std::int64_t> &OrdersIds, std::unordered_map<std::int64_t, bool> mapCompletedIds, int price) {
+void RecursionRun(const std::unordered_map<std::int64_t, lavka::OrderDbInfo>& Orders, const std::unordered_map<std::int64_t, lavka::CourierDbInfo>& Couriers, std::vector<IntervalDelivery> Intervals, const std::vector<std::int64_t> &OrdersIds, std::unordered_map<std::int64_t, bool> mapCompletedIds, int price) {
   //записать результат BestIntervals
   //Надо доставить максимум заказов
   if(mapCompletedIds.size() >= BestCountOrder ||  ( mapCompletedIds.size() == BestCountOrder && price < BestPrice)) {
@@ -260,15 +260,15 @@ OrdersAssign::OrdersAssign(const userver::components::ComponentConfig& config, c
 std::string OrdersAssign::HandleRequestThrow(const userver::server::http::HttpRequest& request, userver::server::request::RequestContext&) const {
 
   //получить заказы
-  auto resOrders = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT id, weight, regions, delivery_hours, cost FROM lavka.orders");
-  auto dataOrders = resOrders.AsSetOf<OrderDbInfo>(pg::kRowTag);
+  auto resOrders = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT id, weight, regions, delivery_hours, cost FROM lavka.orders");
+  auto dataOrders = resOrders.AsSetOf<lavka::OrderDbInfo>(userver::storages::postgres::kRowTag);
 
   //получить курьеров
-  auto resCouriers = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT id, courier_type, regions, working_hours FROM lavka.couriers");
-  auto dataCouriers = resCouriers.AsSetOf<CourierDbInfo>(pg::kRowTag);
+  auto resCouriers = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT id, courier_type, regions, working_hours FROM lavka.couriers");
+  auto dataCouriers = resCouriers.AsSetOf<lavka::CourierDbInfo>(userver::storages::postgres::kRowTag);
 
-  std::unordered_map<std::int64_t, OrderDbInfo> mapOrders;
-  std::unordered_map<std::int64_t, CourierDbInfo> mapCouriers;
+  std::unordered_map<std::int64_t, lavka::OrderDbInfo> mapOrders;
+  std::unordered_map<std::int64_t, lavka::CourierDbInfo> mapCouriers;
   std::unordered_map<std::int64_t, bool> mapCompletedIds;
   std::vector<std::int64_t> OrdersIds;
 
@@ -333,7 +333,7 @@ std::string OrdersAssign::HandleRequestThrow(const userver::server::http::HttpRe
   // BestIntervals - глобальная переменная в которой содержится оптимальное распределение
 
    //сначала всё удалим
-   auto res1 = pg_cluster_->Execute(pg::ClusterHostType::kMaster, "DELETE FROM lavka.couriers_assignments");
+   auto res1 = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, "DELETE FROM lavka.couriers_assignments");
 
   for(auto Interval: BestIntervals) {
     auto courierId = Interval.courier_id;
@@ -357,7 +357,7 @@ std::string OrdersAssign::HandleRequestThrow(const userver::server::http::HttpRe
        
       //потом можно завернуть всё в транзакцию
       //записывать когда начинаем новую партию
-      auto res = pg_cluster_->Execute(pg::ClusterHostType::kMaster, "INSERT INTO lavka.couriers_assignments VALUES ($1, $2, $3)", courierId, time_start, orders);
+      auto res = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, "INSERT INTO lavka.couriers_assignments VALUES ($1, $2, $3)", courierId, time_start, orders);
     }
   }
 

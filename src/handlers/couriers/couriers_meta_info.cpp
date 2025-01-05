@@ -46,8 +46,8 @@ std::string CouriersListMetaInfo::HandleRequestThrow(const userver::server::http
 
   auto prepare_time_1 = userver::utils::datetime::FromStringSaturating(start_date, "%Y-%m-%d");
   auto prepare_time_2 = userver::utils::datetime::FromStringSaturating(end_date, "%Y-%m-%d");
-  auto time_1_db = pg::TimePointTz{prepare_time_1};
-  auto time_2_db = pg::TimePointTz{prepare_time_2};
+  auto time_1_db = userver::storages::postgres::TimePointTz{prepare_time_1};
+  auto time_2_db = userver::storages::postgres::TimePointTz{prepare_time_2};
 
   using namespace std::literals;
 
@@ -65,7 +65,7 @@ std::string CouriersListMetaInfo::HandleRequestThrow(const userver::server::http
   }
 
   //тип курьера
-  auto result1 = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT courier_type FROM lavka.couriers WHERE id = $1", courier_id_db);
+  auto result1 = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT courier_type FROM lavka.couriers WHERE id = $1", courier_id_db);
 
   //если не найден курьер вернуть 404
   if(result1.IsEmpty()) {
@@ -89,7 +89,7 @@ std::string CouriersListMetaInfo::HandleRequestThrow(const userver::server::http
     koeffRating = 2;
   }
 
-  auto result = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT case when sum(cost) is not null then sum(cost) else 0 end s, count(*) count FROM lavka.orders WHERE courier_id = $1 AND complete_date > $2 AND complete_date < $3", courier_id_db, time_1_db, time_2_db);
+  auto result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT case when sum(cost) is not null then sum(cost) else 0 end s, count(*) count FROM lavka.orders WHERE courier_id = $1 AND complete_date > $2 AND complete_date < $3", courier_id_db, time_1_db, time_2_db);
 
   if(result.IsEmpty()) {
     return "{}";

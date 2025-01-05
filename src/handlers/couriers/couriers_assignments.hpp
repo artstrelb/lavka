@@ -20,7 +20,7 @@ class CouriersAssignments final : public userver::server::handlers::HttpHandlerB
     const override;
 
   private:
-   pg::ClusterPtr pg_cluster_;
+   userver::storages::postgres::ClusterPtr pg_cluster_;
 };
 
 

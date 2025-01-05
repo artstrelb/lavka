@@ -23,19 +23,9 @@
 #include <userver/formats/serialize/common_containers.hpp>
 
 #include "../../db/types.hpp"
-
+#include "../../utils/validators.hpp"
 
 namespace lavka {
-
-
-bool checkInterval(std::string str) {
-  if(str.length() != 11) return false;
-  
-  std::string t1 = str.substr(0, 5);
-  std::string t2 = str.substr(6, 5);
-
-  return true;
-}
 
 CouriersAdd::CouriersAdd(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context)
 	: HttpHandlerJsonBase(config, context),
@@ -77,7 +67,7 @@ userver::formats::json::Value CouriersAdd::HandleRequestJsonThrow(const userver:
     std::vector<BoundedTimeRange2> working_hours;
     std::vector<std::string> hours = item["working_hours"].As<std::vector<std::string>>({});
     for(std::string str: hours) {
-      if(!checkInterval(str)) {
+      if(!lavka::checkInterval(str)) {
         error = true;
         break;
       }
@@ -87,7 +77,7 @@ userver::formats::json::Value CouriersAdd::HandleRequestJsonThrow(const userver:
       try {
         Minutes m1 = Minutes{t1};
         Minutes m2 = Minutes{t2};
-        working_hours.push_back(BoundedTimeRange2{m1, m2, pg::RangeBound::kBoth});
+        working_hours.push_back(BoundedTimeRange2{m1, m2, userver::storages::postgres::RangeBound::kBoth});
       } catch (const std::exception& e) {
         error = true;
         break;

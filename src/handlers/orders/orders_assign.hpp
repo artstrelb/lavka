@@ -20,7 +20,7 @@ class OrdersAssign final : public userver::server::handlers::HttpHandlerBase {
     const override;
 
   private:
-   pg::ClusterPtr pg_cluster_;
+   userver::storages::postgres::ClusterPtr pg_cluster_;
 };
 
 void AppendOrdersAssign(userver::components::ComponentList& component_list);

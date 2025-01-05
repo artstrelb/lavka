@@ -24,7 +24,7 @@
 
 
 #include "../../db/types.hpp"
-
+#include "../../utils/validators.hpp"
 
 namespace lavka {
 
@@ -58,7 +58,7 @@ userver::formats::json::Value OrdersAdd::HandleRequestJsonThrow(const userver::s
     std::vector<BoundedTimeRange2> delivery_hours;
     std::vector<std::string> hours = item["delivery_hours"].As<std::vector<std::string>>({});
     for(std::string str: hours) {
-      if(!checkInterval(str)) {
+      if(!lavka::checkInterval(str)) {
         error = true;
         break;
       }
@@ -68,7 +68,7 @@ userver::formats::json::Value OrdersAdd::HandleRequestJsonThrow(const userver::s
       try {
         Minutes m1 = Minutes{t1};
         Minutes m2 = Minutes{t2};
-        delivery_hours.push_back(BoundedTimeRange2{m1, m2, pg::RangeBound::kBoth});
+        delivery_hours.push_back(BoundedTimeRange2{m1, m2, userver::storages::postgres::RangeBound::kBoth});
       } catch (const std::exception& e) {
         error = true;
         break;
@@ -82,7 +82,7 @@ userver::formats::json::Value OrdersAdd::HandleRequestJsonThrow(const userver::s
       return userver::formats::json::FromString("{}");
     }
 
-    auto result = pg_cluster_->Execute(pg::ClusterHostType::kMaster, "INSERT INTO lavka.orders (weight, regions, delivery_hours, cost) VALUES ($1, $2, $3, $4) RETURNING id;", weight, regions, delivery_hours, cost);
+    auto result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, "INSERT INTO lavka.orders (weight, regions, delivery_hours, cost) VALUES ($1, $2, $3, $4) RETURNING id;", weight, regions, delivery_hours, cost);
     auto order_id = result[0][0].As<std::int64_t>();
 
     userver::formats::json::ValueBuilder orderData = item;

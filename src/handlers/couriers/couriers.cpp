@@ -54,7 +54,7 @@ std::string Couriers::HandleRequestThrow(const userver::server::http::HttpReques
     return "";
   }
 
-  auto iteration = result.AsSetOf<lavka::UserDbInfo>(pg::kRowTag);
+  auto iteration = result.AsSetOf<lavka::UserDbInfo>(userver::storages::postgres::kRowTag);
   userver::formats::json::ValueBuilder r;
   r["courier_id"] = iteration[0].id;
 

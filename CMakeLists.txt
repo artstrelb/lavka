@@ -30,6 +30,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/hello.cpp
 
     src/db/types.hpp
+    src/utils/validators.hpp
+    src/utils/validators.cpp
 
     src/handlers/couriers/couriers.hpp
     src/handlers/couriers/couriers.cpp

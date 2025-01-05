@@ -20,7 +20,7 @@ class CouriersListMetaInfo final : public userver::server::handlers::HttpHandler
     const override;
 
   private:
-   pg::ClusterPtr pg_cluster_;
+   userver::storages::postgres::ClusterPtr pg_cluster_;
 };
 
 void AppendCouriersMetaInfo(userver::components::ComponentList& component_list);

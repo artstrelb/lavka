@@ -68,7 +68,7 @@ std::string Orders::HandleRequestThrow(const userver::server::http::HttpRequest&
     return "";
   }
 
-  auto iteration = result.AsSetOf<lavka::OrderDbInfo>(pg::kRowTag);
+  auto iteration = result.AsSetOf<lavka::OrderDbInfo>(userver::storages::postgres::kRowTag);
   userver::formats::json::ValueBuilder r;
   r["order"] = iteration[0].id;
 

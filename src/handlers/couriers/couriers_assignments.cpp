@@ -39,7 +39,7 @@ std::string CouriersAssignments::HandleRequestThrow(const userver::server::http:
   userver::formats::json::ValueBuilder ans;
   ans["couriers"] = {};
 
-  auto result = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT courier_id, time_start, orders FROM lavka.couriers_assignments ORDER BY courier_id ASC, time_start ASC");
+  auto result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT courier_id, time_start, orders FROM lavka.couriers_assignments ORDER BY courier_id ASC, time_start ASC");
 
   //подумать как это всё прочитать
   auto dataAssignments = result.AsSetOf<AssignDbInfo>(pg::kRowTag);

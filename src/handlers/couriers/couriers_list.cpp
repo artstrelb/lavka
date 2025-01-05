@@ -24,6 +24,7 @@
 #include <userver/formats/parse/common_containers.hpp>
 
 #include "../../db/types.hpp"
+#include "../../utils/validators.hpp"
 
 
 namespace lavka {
@@ -44,7 +45,7 @@ std::string CouriersList::HandleRequestThrow(const userver::server::http::HttpRe
   std::int64_t dbOffset = 0;
   std::int64_t dbLimit = 1;
 
-  if (offset.empty() || limit.empty() || !IsDigits(offset) || !IsDigits(limit)) {
+  if (offset.empty() || limit.empty() || !lavka::IsDigits(offset) || !lavka::IsDigits(limit)) {
     error = true;
   }
 
@@ -63,7 +64,7 @@ std::string CouriersList::HandleRequestThrow(const userver::server::http::HttpRe
   userver::formats::json::ValueBuilder ans;
   ans["couriers"] = {};
 
-  auto result = pg_cluster_->Execute(pg::ClusterHostType::kSlave, "SELECT id, courier_type, regions, working_hours FROM lavka.couriers LIMIT $1 OFFSET $2", dbLimit, dbOffset);
+  auto result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, "SELECT id, courier_type, regions, working_hours FROM lavka.couriers LIMIT $1 OFFSET $2", dbLimit, dbOffset);
 
   for(auto row: result) {
     userver::formats::json::ValueBuilder item;

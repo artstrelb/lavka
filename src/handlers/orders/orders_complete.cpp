@@ -47,7 +47,7 @@ std::string OrdersComplete::HandleRequestThrow(const userver::server::http::Http
 
   //научиться дату записывать в БД
   auto prepare_time = userver::utils::datetime::FromRfc3339StringSaturating(complete_time);
-  auto complete_time_db = pg::TimePointTz{prepare_time};
+  auto complete_time_db = userver::storages::postgres::TimePointTz{prepare_time};
 
   if(courier_id.empty() || order_id.empty() || complete_time.empty()) {
     error = true;
@@ -59,7 +59,7 @@ std::string OrdersComplete::HandleRequestThrow(const userver::server::http::Http
   }
 
   //потом поменять на complete_time
-  auto result = pg_cluster_->Execute(pg::ClusterHostType::kMaster, "UPDATE lavka.orders SET courier_id = $1, complete_date = $2 WHERE id = $3 AND (courier_id IS NULL OR courier_id = $4)", courier_id_db, complete_time_db, order_id_db, courier_id_db);
+  auto result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, "UPDATE lavka.orders SET courier_id = $1, complete_date = $2 WHERE id = $3 AND (courier_id IS NULL OR courier_id = $4)", courier_id_db, complete_time_db, order_id_db, courier_id_db);
 
   if(result.RowsAffected() == 0) {
     request.SetResponseStatus(userver::server::http::HttpStatus::kBadRequest);

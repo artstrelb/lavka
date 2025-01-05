@@ -29,13 +29,29 @@ using Seconds = userver::utils::datetime::TimeOfDay<std::chrono::seconds>;
 using TimeRange2 = TimeRange<std::chrono::minutes>;
 using BoundedTimeRange2 = BoundedTimeRange<std::chrono::minutes>;
 
+using Minutes = userver::utils::datetime::TimeOfDay<std::chrono::minutes>;
 
+//Потом объединить
+struct CourierDbInfo {
+    std::int64_t id;
+    CourierType courier_type;
+    std::vector<std::int64_t> regions;
+    std::vector<BoundedTimeRange2> working_hours;
+};
 
 struct UserDbInfo {
     std::int64_t id;
     CourierType courier_type;
     std::vector<int64_t> regions;
     std::vector<BoundedTimeRange2> working_hours;
+};
+
+struct OrderDbInfo {
+  std::int64_t id;
+  float weight;
+  std::int64_t regions;
+  std::vector<BoundedTimeRange2> delivery_hours;
+  std::int64_t cost;
 };
 
 struct AssignDbInfo {
