@@ -37,21 +37,21 @@ CouriersList::CouriersList(const userver::components::ComponentConfig& config, c
 
 
 std::string CouriersList::HandleRequestThrow(const userver::server::http::HttpRequest& request, userver::server::request::RequestContext&) const {
+
   const auto& offset = request.GetArg("offset");
   const auto& limit = request.GetArg("limit");
 
   bool error = false;
 
   std::int64_t dbOffset = 0;
-  std::int64_t dbLimit = 1;
+  std::int64_t dbLimit = 10;
 
-  if (offset.empty() || limit.empty() || !lavka::IsDigits(offset) || !lavka::IsDigits(limit)) {
-    error = true;
-  }
+  if(!offset.empty() && !lavka::IsDigits(offset)) error = true;
+  if(!limit.empty() && !lavka::IsDigits(limit)) error = true;
 
   if(!error) {
-    dbOffset = stoi(offset);
-    dbLimit = stoi(limit);
+    if(!offset.empty()) dbOffset = stoi(offset);
+    if(!limit.empty()) dbLimit = stoi(limit);
   }
 
   if(dbOffset < 0 || dbLimit < 1) error = true;

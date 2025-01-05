@@ -37,3 +37,7 @@ async def test_db_initial_data(service_client):
     )
     assert response.status == 200
     assert response.text == 'Hi again, user-from-initial_data.sql!\n'
+
+async def test_couriers_list(service_client):
+    response = await service_client.get('/couriers')
+    assert response.status == 200
